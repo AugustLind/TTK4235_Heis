@@ -90,6 +90,26 @@ int compare (const void * a, const void * b){
     return ( *(int*)a - *(int*)b );
 }
 
+void openDoor() {
+    //åpner og lukker døren 
+    //sjekk at man står i ro
+    //hvis stoppknapp: dør åpen så elnge man holder inne +3 sek 
+    int check = 1;
+    //sjekk at man ikke er mellom etasjer
+    while(elevio_obstruction() == 1) {
+        //antar at 0 er ingen og at 1 er obstruction
+        check = 0;
+    }
+    if (elevio_floorSensor() == -1) {
+        //mellom etasjer
+        check = 0;
+    }
+    if (check == 1) { //hvis alt er good
+
+    }
+    
+}
+
 void sortQueue(struct StateMachine *state){
     int index = 0;
     
