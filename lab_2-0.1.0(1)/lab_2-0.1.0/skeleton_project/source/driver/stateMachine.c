@@ -25,6 +25,7 @@ void init(){
     //gjøre seg klar til bestillinger/arbeid
     elevio_init();
     getToFirstFloor();
+    printf("Elevator is in first floor\n");
 }
 
 void getOrders(struct StateMachine *state){
@@ -37,16 +38,19 @@ void getOrders(struct StateMachine *state){
     //innerløkke for etasjer
     for (ButtonType i = BUTTON_HALL_UP; i <= BUTTON_CAB; i++){
         for (int j = 0; j < N_FLOORS; j++){
+            int index = j + i*4;
             if (elevio_callButton(j, i)){
-                printf("%d\n", elevio_callButton(j, i)); // Skriv ut heltallet som resultat av funksjonen
-                printf("%d\n", j); 
-                int index = j + i*4;
+                // printf("%d\n", elevio_callButton(j, i)); // Skriv ut heltallet som resultat av funksjonen
+                // printf("%d\n", j); 
                 if (index < 15){
                     state->queue[index] = j;
                 }
                 else {
                     printf("Queue is full\n");
                 }
+            }
+            else {
+                state->queue[index] = -1;
             }
         }
     }
@@ -55,22 +59,25 @@ void getOrders(struct StateMachine *state){
 
 void nextFloor(struct StateMachine *state) {
     //henter første verdi i køen 
-    int *next = state->queue[0];
+    int next = 2;
     //sjekker hvilken etasje man er i og sammenligner
     //om man skal lengre opp eller lengre ned 
     int current = elevio_floorSensor();
-    if (current + 1 < *next) {
-        elevio_motorDirection(DIRN_UP);
-        if (current + 1 == *next) {
-            elevio_motorDirection(DIRN_STOP);
-        }
+    // for (int i = 0; i < 15; i++){
+    //      printf("%d" , state->queue[i]);
+         
+    // }
+    printf("%d",elevio_floorSensor());
+    if (current < next) {
+        state->direction = DIRN_UP;
     }
-    if (current + 1 > *next) {
-        elevio_motorDirection(DIRN_DOWN);
-        if (current + 1 == *next) {
-            elevio_motorDirection(DIRN_STOP);
-        }
+    if (current > next) {
+        state->direction = DIRN_DOWN;
     }
+    if (current == next) {
+        state->direction = DIRN_STOP;
+    }
+    elevio_motorDirection(state->direction);
     //åpne dør 
 }
 

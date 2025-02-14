@@ -11,9 +11,11 @@ int main(){
     struct StateMachine state;
     init();
     int i = 0;
-    while (i = 0) {
+    while (i == 0) {
         getOrders(&state);
+        nextFloor(&state);
     }
+
 
 
     // elevio_init();
