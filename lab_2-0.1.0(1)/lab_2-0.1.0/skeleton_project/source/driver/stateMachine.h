@@ -13,3 +13,5 @@ void getToFirstFloor();
 void init();
 void nextFloor(struct StateMachine *state);
 void getOrders(struct StateMachine *state);
+
+
