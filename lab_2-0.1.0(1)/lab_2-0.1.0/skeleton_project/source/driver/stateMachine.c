@@ -56,7 +56,10 @@ void getOrders(struct StateMachine *state){
     }
 
 }
-
+    // for (int i = 0; i < 15; i++){
+    //      printf("%d" , state->orders[i]);
+         
+    // }
 void nextFloor(struct StateMachine *state) {
     //henter første verdi i køen 
     int next = 2;
@@ -64,10 +67,11 @@ void nextFloor(struct StateMachine *state) {
     //om man skal lengre opp eller lengre ned 
     int current = elevio_floorSensor();
     // for (int i = 0; i < 15; i++){
-    //      printf("%d" , state->queue[i]);
+    //       printf("%d" , state->queue[i]);
          
     // }
-    printf("%d",elevio_floorSensor());
+    // printf("/n");
+    //printf("%d",elevio_floorSensor());
     if (current < next) {
         state->direction = DIRN_UP;
     }
@@ -78,7 +82,26 @@ void nextFloor(struct StateMachine *state) {
         state->direction = DIRN_STOP;
     }
     elevio_motorDirection(state->direction);
+    printf("%d", elevio_obstruction());
     //åpne dør 
 }
 
+int compare (const void * a, const void * b){
+    return ( *(int*)a - *(int*)b );
+}
 
+void sortQueue(struct StateMachine *state){
+    int index = 0;
+    
+    for (int i = 0; i < 15; i++){
+        if (state->queue[i] != -1){
+            state->orders[index++] = state->queue[i];
+        }    
+    }
+    qsort(state->orders, index, sizeof(int),compare);
+
+    for (int i = 0; i < 15; i++){
+          printf("%d" , state->orders[i]);
+         
+    }
+}

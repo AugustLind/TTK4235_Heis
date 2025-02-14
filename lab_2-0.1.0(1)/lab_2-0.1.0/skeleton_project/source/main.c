@@ -10,11 +10,16 @@
 int main(){
     struct StateMachine state;
     init();
+    for (int i = 0; i < 15; i++){
+        state.queue[i] = -1;
+    }
     int i = 0;
     while (i == 0) {
         getOrders(&state);
         nextFloor(&state);
+        sortQueue(&state);
     }
+    
 
 
 
