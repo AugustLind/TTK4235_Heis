@@ -35,3 +35,25 @@ void getOrders(struct StateMachine *state){
     
 }
 
+void nextFloor(struct StateMachine *state) {
+    //henter første verdi i køen 
+    int *next = state->queue[0];
+    //sjekker hvilken etasje man er i og sammenligner
+    //om man skal lengre opp eller lengre ned 
+    int current = elevio_floorSensor();
+    if (current + 1 < *next) {
+        elevio_motorDirection(DIRN_UP);
+        if (current + 1 == *next) {
+            elevio_motorDirection(DIRN_STOP);
+        }
+    }
+    if (current + 1 > *next) {
+        elevio_motorDirection(DIRN_DOWN);
+        if (current + 1 == *next) {
+            elevio_motorDirection(DIRN_STOP);
+        }
+    }
+    //åpne dør 
+}
+
+
