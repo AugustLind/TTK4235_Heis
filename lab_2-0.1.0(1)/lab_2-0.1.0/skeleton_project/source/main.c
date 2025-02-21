@@ -5,21 +5,20 @@
 #include "driver/elevio.h"
 #include "driver/stateMachine.h"
 
-
-
 int main(){
     struct StateMachine state;
-    init();
-    for (int i = 0; i < 15; i++){
-        state.queue[i] = -1;
-    }
-    int i = 0;
-    while (i == 0) {
+    
+    elevio_init();
+    init(&state);
+    initQueue(&state);
+    
+    while (1) {
         getOrders(&state);
         nextFloor(&state);
-        sortQueue(&state);
     }
     
+    return 0;
+}
 
 
 
@@ -63,5 +62,3 @@ int main(){
     //     nanosleep(&(struct timespec){0, 20*1000*1000}, NULL);
     // }
 
-    return 0;
-}
