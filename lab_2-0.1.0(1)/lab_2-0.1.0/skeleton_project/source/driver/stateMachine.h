@@ -10,6 +10,7 @@ struct StateMachine {
     int direction;
     int queue[MAX_ORDERS]; // lagrer etasjene med bestillinger
     int orderCount;      // antall bestillinger i køen
+    int active;
 };
 
 void getToFirstFloor();
@@ -22,3 +23,5 @@ void initQueue(struct StateMachine *state);
 void addOrder(struct StateMachine *state, int floor);
 void removeOrder(struct StateMachine *state, int floor);
 int getNextOrder(struct StateMachine *state);
+void stopButton(struct StateMachine *state);
+void emptyQueue(struct StateMachine *state);

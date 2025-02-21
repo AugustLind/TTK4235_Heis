@@ -13,8 +13,11 @@ int main(){
     initQueue(&state);
     
     while (1) {
-        getOrders(&state);
-        nextFloor(&state);
+        if (state.active == 1) {
+            getOrders(&state);
+            nextFloor(&state);
+         }
+        stopButton(&state);
     }
     
     return 0;

@@ -20,6 +20,7 @@ void init(struct StateMachine *state){
     state->currentFloor = elevio_floorSensor();
     state->direction = DIRN_STOP;
     printf("Elevator is in first floor\n");
+    state->active = 1;
 }
 
 void initQueue(struct StateMachine *state) {
@@ -120,36 +121,35 @@ void nextFloor(struct StateMachine *state) {
 }
 
 void openDoor() {
-    //åpner og lukker døren 
-    //sjekk at man står i ro
-    //hvis stoppknapp: dør åpen så elnge man holder inne +3 sek 
-    int check = 1;
-    //sjekk at man ikke er mellom etasjer
-    while(elevio_obstruction() == 1) {
-        //antar at 0 er ingen og at 1 er obstruction
-        check = 0;
-    }
-    if (elevio_floorSensor() == -1) {
-        //mellom etasjer
-        check = 0;
-    }
-    if (check == 1) { //hvis alt er good
-
-    }
-    
+     //åpner og lukker døren 
+     //sjekk at man står i ro
+     //hvis stoppknapp: dør åpen så elnge man holder inne +3 sek 
+     if (elevio_obstruction() == 0 && elevio_floorSensor() != -1) {
+         elevio_doorOpenLamp(1);
+         sleep(3); 
+         elevio_doorOpenLamp(0);
+     }
 }
 
 void stopButton(struct StateMachine *state) {
     // Når trykkes inn:
     // knapp lyser
-    if (elevio_stopButton() == 1) { //stoppknapp trykkes inn
+    if (elevio_stopButton() == 1 && state->active == 1) { //stoppknapp trykkes inn
+        elevio_stopLamp(1);
+        state->active = 0;
+
         state->direction = DIRN_STOP;
         if (elevio_floorSensor() == -1) { //mellom etasjer
             printf("Between floors, can´t open door");
         }
         if (elevio_floorSensor() == 1) { //i en etasje
-            //kall openDoor
+            elevio_doorOpenLamp(1);
         }
+        emptyQueue(state);
+    }
+    else if (elevio_stopButton() == 1 && state->active == 0) {
+        state->active = 1;
+        elevio_stopLamp(0);
     }
     // heis stopper momentant
     // sjekk om i en etasje
@@ -158,5 +158,12 @@ void stopButton(struct StateMachine *state) {
     // ikke tillate flere bestillinger
     // stå i ro
 
+}
 
+void emptyQueue(struct StateMachine *state) {
+    for (int i = 0; i < state->orderCount; i++){
+        state->queue[i] = -1;
+    }
+    state->orderCount = 0;
+    printf("Emptying queue\n");    
 }
