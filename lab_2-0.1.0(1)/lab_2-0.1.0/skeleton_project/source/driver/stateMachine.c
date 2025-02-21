@@ -118,3 +118,45 @@ void nextFloor(struct StateMachine *state) {
         (state->direction == DIRN_UP) ? "opp" : "ned", next + 1, current + 1);
 
 }
+
+void openDoor() {
+    //åpner og lukker døren 
+    //sjekk at man står i ro
+    //hvis stoppknapp: dør åpen så elnge man holder inne +3 sek 
+    int check = 1;
+    //sjekk at man ikke er mellom etasjer
+    while(elevio_obstruction() == 1) {
+        //antar at 0 er ingen og at 1 er obstruction
+        check = 0;
+    }
+    if (elevio_floorSensor() == -1) {
+        //mellom etasjer
+        check = 0;
+    }
+    if (check == 1) { //hvis alt er good
+
+    }
+    
+}
+
+void stopButton(struct StateMachine *state) {
+    // Når trykkes inn:
+    // knapp lyser
+    if (elevio_stopButton() == 1) { //stoppknapp trykkes inn
+        state->direction = DIRN_STOP;
+        if (elevio_floorSensor() == -1) { //mellom etasjer
+            printf("Between floors, can´t open door");
+        }
+        if (elevio_floorSensor() == 1) { //i en etasje
+            //kall openDoor
+        }
+    }
+    // heis stopper momentant
+    // sjekk om i en etasje
+    // hvis ja, hold dør åpen helt til slippes + 3 sek 
+    // slett bestillingskø
+    // ikke tillate flere bestillinger
+    // stå i ro
+
+
+}
