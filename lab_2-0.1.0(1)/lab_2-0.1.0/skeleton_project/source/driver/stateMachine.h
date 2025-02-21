@@ -8,7 +8,6 @@ struct StateMachine {
     int currentFloor;
     int nextFloor;
     int direction;
-    int active;          // om heisen er i bevegelse
     int queue[MAX_ORDERS]; // lagrer etasjene med bestillinger
     int orderCount;      // antall bestillinger i køen
 };
