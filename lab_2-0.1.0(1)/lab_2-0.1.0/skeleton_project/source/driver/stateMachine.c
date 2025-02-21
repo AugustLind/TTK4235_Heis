@@ -10,9 +10,7 @@ void getToFirstFloor(){
     
     }
     elevio_motorDirection(DIRN_STOP);
-    elevio_doorOpenLamp(1);
-    sleep(3); 
-    elevio_doorOpenLamp(0);
+    openDoor();
 }
 
 void init(struct StateMachine *state){
@@ -26,17 +24,19 @@ void init(struct StateMachine *state){
 void initQueue(struct StateMachine *state) {
     for (int i = 0; i < MAX_ORDERS; i++){
         state->queue[i] = -1;
+        //state->queueDirection[i] = BUTTON_CAB;
     }
     state->orderCount = 0;
 }
 
-void addOrder(struct StateMachine *state, int floor) {
+void addOrder(struct StateMachine *state, int floor, ButtonType btn) {
     for (int i = 0; i < state->orderCount; i++){
         if (state->queue[i] == floor)
             return;
     }
     if (state->orderCount < MAX_ORDERS){
         state->queue[state->orderCount] = floor;
+        //state->queueDirection[state->orderCount] = btn;
         state->orderCount++;
         printf("La til bestilling for etasje %d\n", floor + 1);
     } else {
@@ -56,7 +56,11 @@ void removeOrder(struct StateMachine *state, int floor) {
         for (int i = index; i < state->orderCount - 1; i++){
             state->queue[i] = state->queue[i+1];
         }
+        elevio_buttonLamp(floor, BUTTON_HALL_UP, 0);
+        elevio_buttonLamp(floor, BUTTON_HALL_DOWN, 0);
+        elevio_buttonLamp(floor, BUTTON_CAB, 0);
         state->queue[state->orderCount] = -1;
+        //state->queueDirection[state->orderCount] = BUTTON_CAB;
         state->orderCount--;
         printf("Fjernet bestilling for etasje %d\n", floor + 1);
     }
@@ -68,11 +72,12 @@ int getNextOrder(struct StateMachine *state) {
     int nextFloor = state->queue[0];
     for (int i = 0; i < state->orderCount; i++) {
         int floor = state->queue[i];
+        //ButtonType btn = state->queueDirection[i];
         
         if (state->direction == DIRN_UP && floor > state->currentFloor) {
             if (floor < nextFloor || nextFloor < state->currentFloor) {
                 nextFloor = floor;
-            }
+            } 
         } else if (state->direction == DIRN_DOWN && floor < state->currentFloor) {
             if (floor > nextFloor || nextFloor > state->currentFloor) {
                 nextFloor = floor;
@@ -90,7 +95,8 @@ void getOrders(struct StateMachine *state) {
     for (ButtonType btn = BUTTON_HALL_UP; btn <= BUTTON_CAB; btn++){
         for (int floor = 0; floor < N_FLOORS; floor++){
             if (elevio_callButton(floor, btn)) {
-                addOrder(state, floor);
+                addOrder(state, floor, btn);
+                elevio_buttonLamp(floor, btn, 1);
             }
         }
     }
@@ -103,6 +109,7 @@ void nextFloor(struct StateMachine *state) {
     if (current != -1){
         state->currentFloor = current;
     }
+    floorIndicator(state);
 
     if (state->currentFloor < next) {
         state->direction = DIRN_UP;
@@ -110,8 +117,11 @@ void nextFloor(struct StateMachine *state) {
         state->direction = DIRN_DOWN;
     } else {
         state->direction = DIRN_STOP;
-        removeOrder(state, next);
         elevio_motorDirection(state->direction);
+        if (state->orderCount > 0) {
+            openDoor();
+        }
+        removeOrder(state, next);
         return;
     }
     elevio_motorDirection(state->direction);
@@ -135,7 +145,6 @@ void stopButton(struct StateMachine *state) {
     // Når trykkes inn:
     // knapp lyser
     if (elevio_stopButton() == 1 && state->active == 1) { //stoppknapp trykkes inn
-        elevio_stopLamp(1);
         state->active = 0;
 
         state->direction = DIRN_STOP;
@@ -149,6 +158,11 @@ void stopButton(struct StateMachine *state) {
     }
     else if (elevio_stopButton() == 1 && state->active == 0) {
         state->active = 1;
+    }
+    if (elevio_stopButton() == 1) {
+        elevio_stopLamp(1);
+    }
+    else {
         elevio_stopLamp(0);
     }
     // heis stopper momentant
@@ -166,4 +180,8 @@ void emptyQueue(struct StateMachine *state) {
     }
     state->orderCount = 0;
     printf("Emptying queue\n");    
+}
+
+void floorIndicator(struct StateMachine *state) {
+    elevio_floorIndicator(state->currentFloor);
 }
