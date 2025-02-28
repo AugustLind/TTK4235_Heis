@@ -10,6 +10,12 @@ void getToFirstFloor(){
     
     }
     elevio_motorDirection(DIRN_STOP);
+    for (ButtonType btn = BUTTON_HALL_UP; btn <= BUTTON_CAB; btn++){
+        for (int floor = 0; floor < N_FLOORS; floor++){
+            elevio_buttonLamp(floor, btn, 0);
+        }
+    }
+    elevio_floorIndicator(0);
     openDoor();
 }
 
@@ -35,7 +41,7 @@ void initQueue(struct StateMachine *state) {
     }
     state->orderCount = 0;
 }
-
+ 
 void addOrder(struct StateMachine *state, int floor, ButtonType btn) {
     for (int i = 0; i < state->orderCount; i++){
         if (state->queue[i] == floor)
@@ -85,12 +91,12 @@ int getNextOrder(struct StateMachine *state) {
         if (state->direction == DIRN_UP && floor > state->currentFloor && btn != 1) {
             if (floor < nextFloor || nextFloor < state->currentFloor) {
                 nextFloor = floor;
-                printf("Byttet etasje med rettning %d\n", btn);
+                printf("Byttet etasje med retning %d\n", btn);
             } 
         } else if (state->direction == DIRN_DOWN && floor < state->currentFloor && btn != 0) {
             if (floor > nextFloor || nextFloor > state->currentFloor) {
                 nextFloor = floor;
-                printf("Byttet etasje med rettning %d\n", btn);
+                printf("Byttet etasje med retning %d\n", btn);
             }
         } else if (state->direction == DIRN_STOP) {
             if (abs(floor - state->currentFloor) < abs(nextFloor - state->currentFloor)) {
@@ -189,6 +195,7 @@ void stopButton(struct StateMachine *state) {
             state->active = 0;               // ignore new orders while stopped
             elevio_motorDirection(DIRN_STOP);
             emptyQueue(state);               // clear all orders
+            
 
             if (elevio_floorSensor() != -1) {
                 // If at a floor: open the door as required by D3.
@@ -218,9 +225,21 @@ void emptyQueue(struct StateMachine *state) {
         state->queue[i] = -1;
     }
     state->orderCount = 0;
+    for (ButtonType btn = BUTTON_HALL_UP; btn <= BUTTON_CAB; btn++){
+        for (int floor = 0; floor < N_FLOORS; floor++){
+            elevio_buttonLamp(floor, btn, 0);
+        }
+    } //clearing lights 
     printf("Emptying queue\n");    
 }
 
 void floorIndicator(struct StateMachine *state) {
-    elevio_floorIndicator(state->currentFloor);
+    int next = getNextOrder(state);
+    int current = elevio_floorSensor();
+    if (next == current) {
+        elevio_floorIndicator(next);
+    }
+    else {
+        elevio_floorIndicator(state->currentFloor);
+    }
 }
