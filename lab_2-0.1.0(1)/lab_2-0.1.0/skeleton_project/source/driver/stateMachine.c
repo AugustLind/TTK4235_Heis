@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> // for sleep()
+#include <time.h>
 
-void getToFirstFloor(){
+void getToFirstFloor(struct StateMachine *state){
     elevio_motorDirection(DIRN_DOWN);
     while(elevio_floorSensor() != 0) {
     
@@ -16,7 +17,7 @@ void getToFirstFloor(){
         }
     }
     elevio_floorIndicator(0);
-    openDoor();
+    openDoor(state);
 }
 
 void init(struct StateMachine *state){
@@ -29,7 +30,7 @@ void init(struct StateMachine *state){
     state->stoppedBetweenFloors = 0;
     
     // Call function to initialize other components
-    getToFirstFloor();
+    getToFirstFloor(state);
     state->currentFloor = elevio_floorSensor();
     printf("Elevator is in first floor\n");
 }
@@ -161,7 +162,7 @@ void nextFloor(struct StateMachine *state) {
             state->direction = DIRN_STOP;
             elevio_motorDirection(state->direction);
             if (state->orderCount > 0) {
-                openDoor();
+                openDoor(state);
             }
             removeOrder(state, next);
             return;
@@ -173,7 +174,7 @@ void nextFloor(struct StateMachine *state) {
 
 }
 
-void openDoor() {
+void openDoor(struct StateMachine *state) {
      //åpner og lukker døren 
      //sjekk at man står i ro
      //hvis stoppknapp: dør åpen så elnge man holder inne +3 sek 
@@ -181,8 +182,12 @@ void openDoor() {
          elevio_doorOpenLamp(1);
          while (elevio_obstruction())
          {} 
-         sleep(3);
-         elevio_doorOpenLamp(0);
+        time_t startTime = time(NULL);
+        time_t end_time = startTime + 3;
+        while (time(NULL) < end_time) {
+            getOrders(state);
+        }
+        elevio_doorOpenLamp(0);
      }
 }
     

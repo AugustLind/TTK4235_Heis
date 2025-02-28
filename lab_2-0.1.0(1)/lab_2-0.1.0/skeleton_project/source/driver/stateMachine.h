@@ -15,11 +15,11 @@ struct StateMachine {
     int stoppedBetweenFloors;
 };
 
-void getToFirstFloor();
+void getToFirstFloor(struct StateMachine *state);
 void init(struct StateMachine *state);
 void getOrders(struct StateMachine *state);
 void nextFloor(struct StateMachine *state);
-void openDoor();
+void openDoor(struct StateMachine *state);
 
 void initQueue(struct StateMachine *state);
 void addOrder(struct StateMachine *state, int floor, ButtonType btn);
