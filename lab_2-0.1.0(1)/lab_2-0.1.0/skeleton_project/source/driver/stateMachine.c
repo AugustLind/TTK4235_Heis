@@ -171,9 +171,12 @@ void openDoor() {
      //åpner og lukker døren 
      //sjekk at man står i ro
      //hvis stoppknapp: dør åpen så elnge man holder inne +3 sek 
-     if (elevio_obstruction() == 0 && elevio_floorSensor() != -1) {
+     if (elevio_floorSensor() != -1) {
          elevio_doorOpenLamp(1);
+         while (elevio_obstruction())
+         {} 
          sleep(3);
+         elevio_doorOpenLamp(0);
      }
 }
     
