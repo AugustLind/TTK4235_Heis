@@ -19,6 +19,7 @@ void init(struct StateMachine *state){
     state->direction = DIRN_STOP;
     printf("Elevator is in first floor\n");
     state->active = 1;
+    state->stoppedBetweenFloors = 0;
 }
 
 void initQueue(struct StateMachine *state) {
@@ -110,10 +111,33 @@ void nextFloor(struct StateMachine *state) {
         state->currentFloor = current;
     }
     floorIndicator(state);
+    if (state->stoppedBetweenFloors == 1 && state->active == 1) {
+        printf("Starter mellom etasjer: %d\n", state->direction);;
+        if (elevio_floorSensor() == next){ 
+            state->stoppedBetweenFloors = 0;
+            state->direction = DIRN_STOP;
+            elevio_motorDirection(state->direction);
+        } 
+        else if (state->direction == DIRN_DOWN) {
+            if (next <= state->currentFloor - 1) {
+                elevio_motorDirection(DIRN_DOWN); 
+            } else {
+                elevio_motorDirection(DIRN_UP);   
+            }
+        }
+        else if (state->direction == DIRN_UP) {
+            if (next >= state->currentFloor + 1) {
+                elevio_motorDirection(DIRN_UP); 
+            } else {
+                elevio_motorDirection(DIRN_DOWN); 
+            }
+        } 
+    }
+    else{           
 
-    if (state->currentFloor < next) {
+    if (state->currentFloor < next && elevio_floorSensor() != next) {
         state->direction = DIRN_UP;
-    } else if (state->currentFloor > next) {
+    } else if (state->currentFloor > next && elevio_floorSensor() != next) {
         state->direction = DIRN_DOWN;
     } else {
         state->direction = DIRN_STOP;
@@ -125,6 +149,7 @@ void nextFloor(struct StateMachine *state) {
         return;
     }
     elevio_motorDirection(state->direction);
+    }
     printf("Heisen beveger seg %s mot etasje %d. Current floor: %d\n", 
         (state->direction == DIRN_UP) ? "opp" : "ned", next + 1, current + 1);
 
@@ -142,36 +167,35 @@ void openDoor() {
 }
 
 void stopButton(struct StateMachine *state) {
-    // Når trykkes inn:
-    // knapp lyser
-    if (elevio_stopButton() == 1 && state->active == 1) { //stoppknapp trykkes inn
-        state->active = 0;
+    if (elevio_stopButton() == 1) {
+        // Stop button is pressed: light it and, if not already stopped, take action.
+        elevio_stopLamp(1);
+        if (state->active == 1) {
+            state->active = 0;               // ignore new orders while stopped
+            state->direction = DIRN_STOP;    // immediately stop motion
+            elevio_motorDirection(DIRN_STOP);
+            emptyQueue(state);               // clear all orders
 
-        state->direction = DIRN_STOP;
-        if (elevio_floorSensor() == -1) { //mellom etasjer
-            printf("Between floors, can´t open door");
+            if (elevio_floorSensor() != -1) {
+                // If at a floor: open the door as required by D3.
+                elevio_doorOpenLamp(1);
+            } else {
+                // Between floors: no door opening per requirements.
+                printf("Elevator between floors; door remains closed.\n");
+            }
         }
-        if (elevio_floorSensor() == 1) { //i en etasje
-            elevio_doorOpenLamp(1);
+        // While the button remains pressed, the elevator remains stopped.
+    } else {
+        // Button has been released.
+        elevio_stopLamp(0);
+        if (state->active == 0 && elevio_floorSensor() != -1) {
+            // If the elevator stopped at a floor, keep the door open for an additional 3 sec.
+            sleep(3);
+            elevio_doorOpenLamp(0);
         }
-        emptyQueue(state);
-    }
-    else if (elevio_stopButton() == 1 && state->active == 0) {
+        // Reactivate the elevator to allow new orders.
         state->active = 1;
     }
-    if (elevio_stopButton() == 1) {
-        elevio_stopLamp(1);
-    }
-    else {
-        elevio_stopLamp(0);
-    }
-    // heis stopper momentant
-    // sjekk om i en etasje
-    // hvis ja, hold dør åpen helt til slippes + 3 sek 
-    // slett bestillingskø
-    // ikke tillate flere bestillinger
-    // stå i ro
-
 }
 
 void emptyQueue(struct StateMachine *state) {

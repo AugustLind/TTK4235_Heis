@@ -11,7 +11,8 @@ struct StateMachine {
     int queue[MAX_ORDERS]; // lagrer etasjene med bestillinger
     int orderCount;      // antall bestillinger i køen
     int active;
-    ButtonType queueDirection[MAX_ORDERS];
+    //ButtonType queueDirection[MAX_ORDERS];
+    int stoppedBetweenFloors;
 };
 
 void getToFirstFloor();
