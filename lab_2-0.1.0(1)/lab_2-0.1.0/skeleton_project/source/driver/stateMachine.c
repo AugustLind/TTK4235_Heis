@@ -14,12 +14,18 @@ void getToFirstFloor(){
 }
 
 void init(struct StateMachine *state){
-    getToFirstFloor();
-    state->currentFloor = elevio_floorSensor();
+    // Initialize struct members to avoid issues with uninitialized memory
+    state->currentFloor = -1; // Or an appropriate value
+    state->nextFloor = -1;
     state->direction = DIRN_STOP;
-    printf("Elevator is in first floor\n");
+    state->orderCount = 0;
     state->active = 1;
     state->stoppedBetweenFloors = 0;
+    
+    // Call function to initialize other components
+    getToFirstFloor();
+    state->currentFloor = elevio_floorSensor();
+    printf("Elevator is in first floor\n");
 }
 
 void initQueue(struct StateMachine *state) {
@@ -105,6 +111,9 @@ void getOrders(struct StateMachine *state) {
 
 
 void nextFloor(struct StateMachine *state) {
+    if (state->orderCount == 0) {
+        return;
+    }
     int next = getNextOrder(state);
     int current = elevio_floorSensor();
     if (current != -1){
@@ -112,44 +121,44 @@ void nextFloor(struct StateMachine *state) {
     }
     floorIndicator(state);
     if (state->stoppedBetweenFloors == 1 && state->active == 1) {
-        printf("Starter mellom etasjer: %d\n", state->direction);;
-        if (elevio_floorSensor() == next){ 
-            state->stoppedBetweenFloors = 0;
+        printf("Starter mellom etasjer: %d\n", state->direction);
+        printf("%d\n", next);
+         if (elevio_floorSensor() == next){ 
+             state->stoppedBetweenFloors = 0;
+             state->direction = DIRN_STOP;
+             elevio_motorDirection(state->direction);
+         } 
+         else if (state->direction == DIRN_DOWN) {
+             if (next <= state->currentFloor - 1) {
+                 elevio_motorDirection(DIRN_DOWN); 
+             } else {
+                 elevio_motorDirection(DIRN_UP);   
+             }
+         }
+         else if (state->direction == DIRN_UP) {
+             if (next >= state->currentFloor + 1) {
+                 elevio_motorDirection(DIRN_UP); 
+             } else {
+                 elevio_motorDirection(DIRN_DOWN); 
+             }
+         } 
+     }
+    else{           
+        if (state->currentFloor < next && elevio_floorSensor() != next) {
+            state->direction = DIRN_UP;
+        } else if (state->currentFloor > next && elevio_floorSensor() != next) {
+            state->direction = DIRN_DOWN;
+        } else {
             state->direction = DIRN_STOP;
             elevio_motorDirection(state->direction);
-        } 
-        else if (state->direction == DIRN_DOWN) {
-            if (next <= state->currentFloor - 1) {
-                elevio_motorDirection(DIRN_DOWN); 
-            } else {
-                elevio_motorDirection(DIRN_UP);   
+            if (state->orderCount > 0) {
+                openDoor();
             }
+            removeOrder(state, next);
+            return;
         }
-        else if (state->direction == DIRN_UP) {
-            if (next >= state->currentFloor + 1) {
-                elevio_motorDirection(DIRN_UP); 
-            } else {
-                elevio_motorDirection(DIRN_DOWN); 
-            }
-        } 
-    }
-    else{           
-
-    if (state->currentFloor < next && elevio_floorSensor() != next) {
-        state->direction = DIRN_UP;
-    } else if (state->currentFloor > next && elevio_floorSensor() != next) {
-        state->direction = DIRN_DOWN;
-    } else {
-        state->direction = DIRN_STOP;
         elevio_motorDirection(state->direction);
-        if (state->orderCount > 0) {
-            openDoor();
         }
-        removeOrder(state, next);
-        return;
-    }
-    elevio_motorDirection(state->direction);
-    }
     printf("Heisen beveger seg %s mot etasje %d. Current floor: %d\n", 
         (state->direction == DIRN_UP) ? "opp" : "ned", next + 1, current + 1);
 
@@ -161,10 +170,10 @@ void openDoor() {
      //hvis stoppknapp: dør åpen så elnge man holder inne +3 sek 
      if (elevio_obstruction() == 0 && elevio_floorSensor() != -1) {
          elevio_doorOpenLamp(1);
-         sleep(3); 
-         elevio_doorOpenLamp(0);
+         sleep(3);
      }
 }
+    
 
 void stopButton(struct StateMachine *state) {
     if (elevio_stopButton() == 1) {
@@ -172,7 +181,6 @@ void stopButton(struct StateMachine *state) {
         elevio_stopLamp(1);
         if (state->active == 1) {
             state->active = 0;               // ignore new orders while stopped
-            state->direction = DIRN_STOP;    // immediately stop motion
             elevio_motorDirection(DIRN_STOP);
             emptyQueue(state);               // clear all orders
 
@@ -181,6 +189,7 @@ void stopButton(struct StateMachine *state) {
                 elevio_doorOpenLamp(1);
             } else {
                 // Between floors: no door opening per requirements.
+                state->stoppedBetweenFloors = 1;
                 printf("Elevator between floors; door remains closed.\n");
             }
         }
