@@ -31,7 +31,7 @@ void init(struct StateMachine *state){
 void initQueue(struct StateMachine *state) {
     for (int i = 0; i < MAX_ORDERS; i++){
         state->queue[i] = -1;
-        //state->queueDirection[i] = BUTTON_CAB;
+        state->queueDirection[i] = BUTTON_CAB;
     }
     state->orderCount = 0;
 }
@@ -43,9 +43,10 @@ void addOrder(struct StateMachine *state, int floor, ButtonType btn) {
     }
     if (state->orderCount < MAX_ORDERS){
         state->queue[state->orderCount] = floor;
-        //state->queueDirection[state->orderCount] = btn;
+        state->queueDirection[state->orderCount] = btn;
         state->orderCount++;
         printf("La til bestilling for etasje %d\n", floor + 1);
+        printf("Med rettning %d\n", btn);
     } else {
         printf("Køen er full\n");
     }
@@ -67,7 +68,7 @@ void removeOrder(struct StateMachine *state, int floor) {
         elevio_buttonLamp(floor, BUTTON_HALL_DOWN, 0);
         elevio_buttonLamp(floor, BUTTON_CAB, 0);
         state->queue[state->orderCount] = -1;
-        //state->queueDirection[state->orderCount] = BUTTON_CAB;
+        state->queueDirection[state->orderCount] = BUTTON_CAB;
         state->orderCount--;
         printf("Fjernet bestilling for etasje %d\n", floor + 1);
     }
@@ -79,15 +80,17 @@ int getNextOrder(struct StateMachine *state) {
     int nextFloor = state->queue[0];
     for (int i = 0; i < state->orderCount; i++) {
         int floor = state->queue[i];
-        //ButtonType btn = state->queueDirection[i];
+        ButtonType btn = state->queueDirection[i];
         
-        if (state->direction == DIRN_UP && floor > state->currentFloor) {
+        if (state->direction == DIRN_UP && floor > state->currentFloor && btn != 1) {
             if (floor < nextFloor || nextFloor < state->currentFloor) {
                 nextFloor = floor;
+                printf("Byttet etasje med rettning %d\n", btn);
             } 
-        } else if (state->direction == DIRN_DOWN && floor < state->currentFloor) {
+        } else if (state->direction == DIRN_DOWN && floor < state->currentFloor && btn != 0) {
             if (floor > nextFloor || nextFloor > state->currentFloor) {
                 nextFloor = floor;
+                printf("Byttet etasje med rettning %d\n", btn);
             }
         } else if (state->direction == DIRN_STOP) {
             if (abs(floor - state->currentFloor) < abs(nextFloor - state->currentFloor)) {
