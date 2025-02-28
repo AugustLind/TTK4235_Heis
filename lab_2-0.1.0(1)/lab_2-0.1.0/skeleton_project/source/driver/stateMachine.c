@@ -15,6 +15,7 @@ void getToFirstFloor(){
             elevio_buttonLamp(floor, btn, 0);
         }
     }
+    elevio_floorIndicator(0);
     openDoor();
 }
 
@@ -230,5 +231,12 @@ void emptyQueue(struct StateMachine *state) {
 }
 
 void floorIndicator(struct StateMachine *state) {
-    elevio_floorIndicator(state->currentFloor);
+    int next = getNextOrder(state);
+    int current = elevio_floorSensor();
+    if (next == current) {
+        elevio_floorIndicator(next);
+    }
+    else {
+        elevio_floorIndicator(state->currentFloor);
+    }
 }
