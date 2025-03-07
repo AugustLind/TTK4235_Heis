@@ -88,6 +88,9 @@ int getNextOrder(struct StateMachine *state) {
     for (int i = 0; i < state->orderCount; i++) {
         int floor = state->queue[i];
         ButtonType btn = state->queueDirection[i];
+        printf("Etasje: %d\n", floor + 1);
+        printf("Knapp:  %d\n", btn);
+        
         
         if (state->direction == DIRN_UP && floor > state->currentFloor && btn != 1) {
             if (floor < nextFloor || nextFloor < state->currentFloor) {
@@ -99,11 +102,12 @@ int getNextOrder(struct StateMachine *state) {
                 nextFloor = floor;
                 printf("Byttet etasje med retning %d\n", btn);
             }
-        } else if (state->direction == DIRN_STOP) {
-            if (abs(floor - state->currentFloor) < abs(nextFloor - state->currentFloor)) {
-                nextFloor = floor;
-            }
-        }
+        } 
+        // else if (state->direction == DIRN_STOP) {
+        //      if (abs(floor - state->currentFloor) < abs(nextFloor - state->currentFloor)) {
+        //          nextFloor = floor;
+        //      }
+        // }
     }
     return nextFloor;
 }
