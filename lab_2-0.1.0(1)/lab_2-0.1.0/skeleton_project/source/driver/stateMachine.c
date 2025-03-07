@@ -70,6 +70,7 @@ void removeOrder(struct StateMachine *state, int floor) {
     if (index != -1){
         for (int i = index; i < state->orderCount - 1; i++){
             state->queue[i] = state->queue[i+1];
+            state->queueDirection[i] = state->queueDirection[i+1];
         }
         elevio_buttonLamp(floor, BUTTON_HALL_UP, 0);
         elevio_buttonLamp(floor, BUTTON_HALL_DOWN, 0);
@@ -165,10 +166,12 @@ void nextFloor(struct StateMachine *state) {
         } else {
             state->direction = DIRN_STOP;
             elevio_motorDirection(state->direction);
-            if (state->orderCount > 0) {
+            int count = state->orderCount;
+            removeOrder(state, next);
+            if (count > 0) {
                 openDoor(state);
             }
-            removeOrder(state, next);
+           
             return;
         }
         elevio_motorDirection(state->direction);
